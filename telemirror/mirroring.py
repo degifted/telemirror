@@ -7,13 +7,9 @@ from telethon.sessions import StringSession
 from telethon.tl import types
 
 from config import DirectionConfig
-from telemirror._patch import (
-    forward_messages,
-    patch_input_media_with_spoiler,
-    send_file,
-    send_message,
-    set_album_event_timeout,
-)
+from telemirror._patch import (forward_messages,
+                               patch_input_media_with_spoiler, send_file,
+                               send_message, set_album_event_timeout)
 from telemirror.hints import EventAlbumMessage, EventLike, EventMessage
 from telemirror.mixins import CopyEventMessage
 from telemirror.storage import Database, MirrorMessage
@@ -65,6 +61,15 @@ class EventProcessor(CopyEventMessage):
         if not outgoing_chats:
             self._logger.warning(
                 f"[New message]: No target chats for message {message_link}"
+            )
+            return
+        if (
+            isinstance(message.fwd_from, types.MessageFwdHeader) and
+            hasattr(message.fwd_from.from_id, 'channel_id') and
+            isinstance(message.fwd_from.from_id, types.PeerChannel)
+            ):
+            self._logger.warning(
+                f"[New message]: Skip forwarding message forwarded from a public channel {message_link}"
             )
             return
 
